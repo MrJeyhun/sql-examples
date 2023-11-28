@@ -60,3 +60,57 @@ SELECT url, contents, username
 FROM COMMENTS
 JOIN photos ON photos.id = comments.photo_id
 JOIN users ON users.id = comments.user_id AND users.id = photos.user_id;
+
+-- GROUP BY (find the set of all unique user_id s 
+-- group by the user_id, without aggregation it's not useful actually) 
+SELECT user_id
+FROM comments
+GROUP BY user_id; 
+
+
+-- Number of comments users have created (aggregation)
+SELECT user_id, COUNT(id) AS num_comments_created
+FROM COMMENTS
+GROUP BY user_id
+
+-- Number of comments users have created (with user name)
+SELECT username, COUNT(*)
+FROM COMMENTS
+JOIN users ON users.id = comments.user_id
+GROUP BY users.username;
+
+-- Number of photos users have created (but, one of them is setted to NULL)
+-- NULL values are not counted
+SELECT user_id, COUNT(user_id) 
+FROM photos
+GROUP BY user_id
+-- NULL values are counted
+SELECT user_id, COUNT(*) 
+FROM photos
+GROUP BY user_id
+
+
+-- Number of comments for each photo
+SELECT photo_id, COUNT(*) AS num_of_comments
+FROM COMMENTS
+GROUP BY photo_id;
+
+
+-- FILTERING GROUPS
+
+-- Find the number of comments for each photo where the photo_id is less than 3
+-- and the photo has more than 2 comments
+SELECT photo_id, COUNT(*)
+FROM COMMENTS
+WHERE photo_id < 3
+GROUP BY photo_id
+HAVING COUNT(*) > 2;
+
+
+-- Find the user_ids where user has commented on the first 50 photo
+-- and the users added more than 20 comments on thoose photos
+SELECT user_id, COUNT(*)
+FROM COMMENTS
+WHERE photo_id < 50
+GROUP BY user_id
+HAVING COUNT(*) > 20;
