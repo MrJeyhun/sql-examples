@@ -200,3 +200,49 @@ WHERE price > (
 	SELECT AVG(price)
 	FROM products
 );
+
+
+-- show the name of all products that are not in the same departments
+-- as products with a price less than 100
+SELECT name, department
+FROM products 
+WHERE department NOT IN (
+	SELECT department
+  FROM products
+  WHERE price < 100
+);
+
+-- shor the name, department, and price of products that are more expensive
+-- than all products in the 'Industrial' department
+SELECT name, department, price
+FROM products 
+WHERE price > ALL (
+	SELECT price FROM products WHERE department = 'Industrial'
+);
+
+-- shor the name, department, and price of products that are more expensive
+-- than at least one product in the 'Industrial' department
+SELECT name, department, price
+FROM products 
+WHERE price > SOME (
+	SELECT price FROM products WHERE department = 'Industrial'
+);
+
+-- show the name, department, and price of the most expensive product
+-- in each department (Correlated subquery)
+SELECT name, department, price
+FROM products AS p1
+WHERE p1.price = (
+	SELECT MAX(price) 
+  FROM products AS p2 
+  WHERE p1.department = p2.department
+);
+
+-- without a join or a group by, print the number of orders
+-- print the number of orders for each product
+SELECT name, (
+	SELECT COUNT(*)
+  FROM orders AS o1
+  WHERE o1.product_id = p1.id
+) AS order_count
+FROM products AS p1;
