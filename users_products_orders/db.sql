@@ -246,3 +246,34 @@ SELECT name, (
   WHERE o1.product_id = p1.id
 ) AS order_count
 FROM products AS p1;
+
+
+-- get all unique departments
+SELECT DISTINCT department
+FROM products;
+
+-- get count all unique departments
+SELECT COUNT(DISTINCT department)
+FROM products;
+
+-- compute the cost to ship each item (weight * $2)
+-- minimum 30 USD, or weight * $2
+SELECT name, weight, GREATEST(30, 2 * weight)
+FROM products;
+
+-- All products are on the sale!
+-- Price is the least of the products price * 0.5 or $400
+SELECT name, price, LEAST(price * 0.5, 400)
+FROM products;
+
+-- Print each product name, also print a description of the price
+-- if price > 600 then 'high' / if price > 300 then 'medium' / else 'cheap'
+SELECT
+	name,
+  price,
+  CASE
+  	WHEN price > 600 THEN 'high'
+    WHEN price > 300 THEN 'medium'
+    ELSE 'cheap'
+  END
+FROM products;
