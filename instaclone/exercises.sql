@@ -73,7 +73,7 @@ SELECT *
 FROM countdown;
 
 
--- Suggestion Tree Recursion
+-- Suggestion Tree Recursion (Example on following suggestions)
 WITH RECURSIVE suggestions(leader_id, follower_id, depth) AS ( 
     --
 	SELECT leader_id, follower_id, 1 AS depth
@@ -94,3 +94,78 @@ FROM suggestions
 JOIN users ON users.id = suggestions.leader_id
 WHERE depth > 1
 LIMIT 30
+
+
+-- Show the most popular users the users who were tagged the most
+SELECT username, COUNT(*)
+FROM users
+JOIN (
+	SELECT user_id FROM photo_tags
+	UNION ALL
+	SELECT user_id FROM caption_tags
+) AS tags ON tags.user_id = users.id
+GROUP BY username
+ORDER BY COUNT(*) DESC
+
+
+-- UNIONING two table with View Table
+CREATE VIEW tags AS (
+	SELECT id, created_at, user_id, post_id, 'photo_tag' AS type FROM photo_tags
+	UNION ALL
+	SELECT id, created_at, user_id, post_id, 'caption_tag' AS type FROM caption_tags
+)
+
+
+-- 10 most recent posts table with View Table
+CREATE VIEW recent_posts AS (
+	SELECT *
+	FROM posts
+	ORDER BY created_at DESC
+	LIMIT 10
+);
+
+-- update it to 15 most recent posts (Update View Table)
+CREATE OR REPLACE VIEW recent_posts AS (
+	SELECT *
+	FROM posts
+	ORDER BY created_at DESC
+	LIMIT 15
+)
+
+-- delete View Table
+DROP VIEW recent_posts
+
+
+-- Materialized Views
+
+-- For each week, show the number of likes that posts and comments received
+-- Use the post and comment created_at date, not when the like was received
+-- it's a expensive query (that's why we 'cache' the result with Materialized View)
+SELECT 
+	date_trunc('week', COALESCE(posts.created_at, comments.created_at)) AS week,-- rounded down to the nearest week
+	COUNT(posts.id) AS num_likes_for_posts,
+	COUNT(comments.id) AS num_likes_for_comments
+FROM likes
+LEFT JOIN posts ON posts.id = likes.post_id
+LEFT JOIN comments ON comments.id = likes.comment_id
+GROUP BY week
+ORDER BY week
+
+
+
+-- Materialized View of the above expensive query
+CREATE MATERIALIZED VIEW weekly_likes AS (
+	SELECT 
+		date_trunc('week', COALESCE(posts.created_at, comments.created_at)) AS week,-- rounded down to the nearest week
+		COUNT(posts.id) AS num_likes_for_posts,
+		COUNT(comments.id) AS num_likes_for_comments
+	FROM likes
+	LEFT JOIN posts ON posts.id = likes.post_id
+	LEFT JOIN comments ON comments.id = likes.comment_id
+	GROUP BY week
+	ORDER BY week
+) with DATA; -- create a materialized view, run it one time, hold on all the results
+
+
+-- After the every mutation query, we should REFRESH materialized view
+REFRESH MATERIALIZED VIEW weekly_likes;
