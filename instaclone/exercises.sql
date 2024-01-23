@@ -36,3 +36,38 @@ WHERE username = 'Emil30'
 SELECT relname, relkind
 FROM pg_class
 WHERE relkind = 'i'
+
+-- Show the username of users who were tagged in a caption or photo 
+-- before January 7th 2010. Also show the date they were tagged
+
+-- Quick solution: DOWNSIDE: inside JOIN clouse
+SELECT username, tags.created_at
+FROM users
+JOIN (
+	SELECT user_id, created_at FROM caption_tags
+	UNION ALL
+	SELECT user_id, created_at FROM photo_tags
+) as tags ON tags.user_id = users.id
+WHERE tags.created_at < '2010-01-07'
+
+-- more readable solution: Common Table Expression
+WITH tags AS (
+	SELECT user_id, created_at FROM caption_tags
+	UNION ALL
+	SELECT user_id, created_at FROM photo_tags
+)
+SELECT username, tags.created_at
+FROM users
+JOIN tags ON tags.user_id = users.id
+WHERE tags.created_at < '2010-01-07'
+
+
+-- Recursive Common Table Expression
+WITH RECURSIVE countdown(val) AS (
+	SELECT 10 AS val
+	UNION
+	SELECT val - 1 FROM countdown WHERE val > 1
+)
+
+SELECT *
+FROM countdown;
